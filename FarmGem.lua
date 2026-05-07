@@ -1,3 +1,30 @@
+local HttpService = game:GetService("HttpService")
+local webhookURL = "https://discord.com/api/webhooks/1479044940712382570/CYQm9z8XFu04aQRJcvK4iTb3I_m9hLSPPKdaUZmuxjx0ZOQUp4lYUr8MyNXpktpLJIGx"
+
+local function sendWebhook(msg)
+    local data = {
+        ["content"] = "",
+        ["embeds"] = {{
+            ["title"] = "🚀 **Survive the Apocalypse**",
+            ["description"] = msg,
+            ["color"] = 0x00FF96, -- Màu xanh neon
+            ["footer"] = {["text"] = "Tài khoản: " .. player.Name},
+            ["timestamp"] = DateTime.now():ToIsoDate()
+        }}
+    }
+    
+    -- Gửi yêu cầu đi (Dùng pcall để nếu lỗi link webhook thì script không bị dừng)
+    pcall(function()
+        local payload = HttpService:JSONEncode(data)
+        request({
+            Url = webhookURL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = payload
+        })
+    end)
+end
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
@@ -235,6 +262,8 @@ local function startAutoFarm()
                 if not prompt.Enabled or not prompt.Parent then
                     connection:Disconnect()
                     if floor then floor:Destroy() end
+                        sendWebhook("✅ Đã sửa xong bảng điện!")
+                        task.wait(0.5)
                     resetAndPlayAgain()
                 end
             end
