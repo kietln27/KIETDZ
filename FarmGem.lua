@@ -16,11 +16,16 @@ statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
 statusLabel.TextScaled = true
+statusLabel.Font = Enum.Font.GothamBold -- Đổi Font nhìn cho hiện đại
 statusLabel.Text = "Đang khởi động..."
+
+-- THÊM BO GÓC VÀO ĐÂY
+local uiCorner = Instance.new("UICorner", statusLabel)
+uiCorner.CornerRadius = UDim.new(0, 12) -- Bo tròn cạnh nhìn cho mượt
 
 -- Hàm để đổi chữ nhanh
 local function updateStatus(text)
-    statusLabel.Text = "🤖 " .. text
+    statusLabel.Text = text
 end
 
 -- 1. Hàm tìm đúng cái bảng điện Nhà Máy
