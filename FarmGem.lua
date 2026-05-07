@@ -111,61 +111,35 @@ local function interact(prompt)
 end
 
 -- HÀM RESET XONG MỚI ĐỢI NHẤN PLAY AGAIN
+-- 4. HÀM RESET & PLAY AGAIN (Bản ổn định nhất)
 local function resetAndPlayAgain()
-    updateStatus("♻️ Đang Reset nhân vật...")
-
-    -- 1. Tự sát
+    updateStatus("♻️ Đang Reset...")
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.Health = 0
     end
 
-    -- Đợi cho đến khi chết hẳn và bảng kết quả bắt đầu hiện (Tầm 3s)
     task.wait(3) 
 
     local clicked = false
-    local retryCount = 0
-    
-    -- Vòng lặp quét liên tục cho đến khi bấm được mới thôi
-    while not clicked and retryCount < 20 do -- Quét tối đa 20 lần (khoảng 10 giây)
+    while not clicked do
         local pGui = player:FindFirstChild("PlayerGui")
         if pGui then
-            -- Tìm kiếm sâu hơn trong toàn bộ PlayerGui
             for _, v in pairs(pGui:GetDescendants()) do
-                if v:IsA("TextButton") and v.Text:find("Play Again") then
-                    -- Kiểm tra xem nút có thực sự hiện lên màn hình không
-                    if v.Visible or v.Transparency < 1 then
-                        task.wait(0.5) -- Nghỉ một chút để nút nhận tương tác
-                        
-                        -- Cố gắng bấm bằng nhiều cách khác nhau cho chắc chắn
-                        pcall(function()
-                            if getconnections then
-                                for _, connection in pairs(getconnections(v.MouseButton1Click)) do
-                                    connection:Fire()
-                                end
-                                for _, connection in pairs(getconnections(v.Activated)) do
-                                    connection:Fire()
-                                end
-                            end
-                            v:Activate() -- Cách mặc định của Roblox
-                        end)
-                        clicked = true
-                        break
-                    end
+                if v:IsA("TextButton") and v.Text:find("Play Again") and v.Visible then
+                    task.wait(0.5)
+                    pcall(function()
+                        if getconnections then
+                            for _, c in pairs(getconnections(v.MouseButton1Click)) do c:Fire() end
+                        end
+                        v:Activate()
+                    end)
+                    clicked = true; break
                 end
             end
         end
-        
-        if not clicked then
-            retryCount = retryCount + 1
-            task.wait(0.5) -- Đợi 0.5s rồi quét lại lần nữa
-        end
-    end
-    
-    if not clicked then
-        sendWebhook("❌ **Lỗi:** Đã Reset nhưng không tìm thấy nút Play Again!")
+        task.wait(0.5)
     end
 end
-
 local function startAutoFarm()
     local char = player.Character or player.CharacterAdded:Wait()
     local root = char:WaitForChild("HumanoidRootPart", 10)
