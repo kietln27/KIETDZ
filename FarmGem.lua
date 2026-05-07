@@ -234,7 +234,7 @@ local function startAutoFarm()
             elseif isInsideWall then
                 hum.WalkSpeed = 7
             else
-                hum.WalkSpeed = 35
+                hum.WalkSpeed = 30
             end
             
             for _, p in pairs(char:GetDescendants()) do
