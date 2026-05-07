@@ -166,7 +166,7 @@ local function startAutoFarm()
         connection = RunService.Stepped:Connect(function()
         -- KIỂM TRA HẾT 2 PHÚT --
         local timeElapsed = tick() - startTime
-            if timeElapsed > 60 then 
+            if timeElapsed > 100 then 
                 connection:Disconnect() 
                 if floor then floor:Destroy() end 
                 resetAndPlayAgain() 
@@ -216,7 +216,7 @@ local function startAutoFarm()
             local dist = (root.Position - targetPart.Position).Magnitude
             
             -- CẬP NHẬT UI CÓ ĐẾM NGƯỢC
-            updateStatus(math.floor(dist) .. "m | Còn: " .. math.floor(60 - timeElapsed) .. "s")
+            updateStatus(math.floor(dist) .. "m | Còn: " .. math.floor(100 - timeElapsed) .. "s")
 
             if dist < 5 then
                 hum.WalkSpeed = 0
