@@ -10,13 +10,14 @@ local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "AutoFarmStatus"
 
 local statusLabel = Instance.new("TextLabel", screenGui)
-statusLabel.Size = UDim2.new(0, 300, 0, 50)
+statusLabel.Size = UDim2.new(0, 320, 0, 60)
 statusLabel.Position = UDim2.new(0.5, -150, 0.1, 0) -- Nằm ở giữa phía trên
 statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
-statusLabel.TextScaled = true
-statusLabel.Font = Enum.Font.GothamBold -- Đổi Font nhìn cho hiện đại
+statusLabel.TextScaled = false
+statusLabel.TextSize = 20
+statusLabel.Font = Enum.Font.SourceSansPro
 statusLabel.Text = "Đang khởi động..."
 
 -- THÊM BO GÓC VÀO ĐÂY
@@ -91,7 +92,7 @@ end
 
 -- HÀM RESET XONG MỚI ĐỢI NHẤN PLAY AGAIN
 local function resetAndPlayAgain()
-    updateStatus("♻️ Reset & Play Again...")
+    updateStatus("Reset & Play Again...")
 
     -- 1. Tự sát (Dùng logic Health bạn vừa chọn)
     if player.Character and player.Character:FindFirstChild("Humanoid") then
