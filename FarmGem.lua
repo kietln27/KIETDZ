@@ -11,18 +11,18 @@ screenGui.Name = "AutoFarmStatus"
 
 local statusLabel = Instance.new("TextLabel", screenGui)
 statusLabel.Size = UDim2.new(0, 320, 0, 60)
-statusLabel.Position = UDim2.new(0.5, -150, 0.1, 0) -- Nằm ở giữa phía trên
+statusLabel.Position = UDim2.new(0.5, -160, 0.1, 0) -- Đã chỉnh lại -160 để căn giữa chuẩn
 statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
 statusLabel.TextScaled = false
-statusLabel.TextSize = 20
-statusLabel.Font = Enum.Font.SourceSansPro
+statusLabel.TextSize = 22 -- Tăng size chữ lên một chút cho dễ nhìn
+statusLabel.Font = Enum.Font.GothamBold -- Đổi font ngầu và hỗ trợ tiếng Việt
 statusLabel.Text = "Đang khởi động..."
 
--- THÊM BO GÓC VÀO ĐÂY
+-- THÊM BO GÓC
 local uiCorner = Instance.new("UICorner", statusLabel)
-uiCorner.CornerRadius = UDim.new(0, 12) -- Bo tròn cạnh nhìn cho mượt
+uiCorner.CornerRadius = UDim.new(0, 12) -- Tăng độ bo góc lên 15 cho mượt hơn
 
 -- Hàm để đổi chữ nhanh
 local function updateStatus(text)
