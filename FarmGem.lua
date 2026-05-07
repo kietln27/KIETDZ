@@ -86,49 +86,32 @@ end
 
 -- HÀM RESET XONG MỚI ĐỢI NHẤN PLAY AGAIN
 local function resetAndPlayAgain()
-updateStatus("♻️ Đang Reset...")
-    task.wait(0.2)
+    updateStatus("♻️ Reset & Play Again...")
 
-    -- Thực hiện Reset qua Menu
-    VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-    task.wait(0.2)
-
-    for i = 1, 2 do
-        VIM:SendKeyEvent(true, Enum.KeyCode.R, false, game)
-        task.wait(0.15)
-        VIM:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-        task.wait(0.15)
-    end
-    task.wait(0.1)
-
-    local screen = workspace.CurrentCamera.ViewportSize
-    for i = 1, 2 do
-        VIM:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-        task.wait(0.5)
-        VIM:SendMouseButtonEvent(screen.X / 2, screen.Y / 2, 0, true, game, 1)
-        task.wait(0.05)
-        VIM:SendMouseButtonEvent(screen.X / 2, screen.Y / 2, 0, false, game, 1)
-        task.wait(0.2)
+    -- 1. Tự sát (Dùng logic Health bạn vừa chọn)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.Health = 0
     end
 
-    -- Bước 2: Đợi hiện bảng để nhấn Play Again
+    task.wait(2.5) -- Đợi bảng Play Again hiện ra
+
+    -- 2. Tự động nhấn Play Again bằng cách Fire Event của nút
     local clicked = false
     while not clicked do
         local pGui = player:FindFirstChild("PlayerGui")
         if pGui then
             for _, v in pairs(pGui:GetDescendants()) do
                 if v:IsA("TextButton") and v.Text:find("Play Again") and v.Visible then
-                    GuiService.SelectedObject = v
-                    VIM:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                    task.wait(0.05)
-                    VIM:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-                    
-                    VIM:SendMouseButtonEvent(screen.X / 2, screen.Y / 2, 0, true, game, 1)
-                    task.wait(0.05)
-                    VIM:SendMouseButtonEvent(screen.X / 2, screen.Y / 2, 0, false, game, 1)
-                    
-                    clicked = true
-                    break
+                    -- Kích hoạt tất cả các hàm liên kết với nút này (Click, Touch,...)
+                    if getconnections then
+                        for _, connection in pairs(getconnections(v.MouseButton1Click)) do
+                            connection:Fire()
+                        end
+                    else
+                        -- Nếu Executor của bạn không có getconnections thì dùng tạm cái này
+                        v:Activate() 
+                    end
+                    clicked = true; break
                 end
             end
         end
@@ -177,7 +160,7 @@ local function startAutoFarm()
         connection = RunService.Stepped:Connect(function()
         -- KIỂM TRA HẾT 2 PHÚT --
         local timeElapsed = tick() - startTime
-            if timeElapsed > 60 then 
+            if timeElapsed > 40 then 
                 connection:Disconnect() 
                 if floor then floor:Destroy() end 
                 resetAndPlayAgain() 
