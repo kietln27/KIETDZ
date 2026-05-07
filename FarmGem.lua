@@ -177,7 +177,7 @@ local function startAutoFarm()
         connection = RunService.Stepped:Connect(function()
         -- KIỂM TRA HẾT 2 PHÚT --
         local timeElapsed = tick() - startTime
-            if timeElapsed > 120 then 
+            if timeElapsed > 60 then 
                 connection:Disconnect() 
                 if floor then floor:Destroy() end 
                 resetAndPlayAgain() 
