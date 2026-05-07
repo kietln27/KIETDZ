@@ -16,7 +16,7 @@ statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
 statusLabel.TextScaled = true
-statusLabel.Text = "🤖 Hệ thống: Đang khởi động..."
+statusLabel.Text = "Đang khởi động..."
 
 -- Hàm để đổi chữ nhanh
 local function updateStatus(text)
@@ -160,7 +160,7 @@ local function startAutoFarm()
         connection = RunService.Stepped:Connect(function()
         -- KIỂM TRA HẾT 2 PHÚT --
         local timeElapsed = tick() - startTime
-            if timeElapsed > 40 then 
+            if timeElapsed > 60 then 
                 connection:Disconnect() 
                 if floor then floor:Destroy() end 
                 resetAndPlayAgain() 
@@ -210,7 +210,7 @@ local function startAutoFarm()
             local dist = (root.Position - targetPart.Position).Magnitude
             
             -- CẬP NHẬT UI CÓ ĐẾM NGƯỢC
-            updateStatus(math.floor(dist) .. "m | Còn lại: " .. math.floor(40 - timeElapsed) .. "s")
+            updateStatus(math.floor(dist) .. "m | Còn: " .. math.floor(60 - timeElapsed) .. "s")
 
             if dist < 5 then
                 hum.WalkSpeed = 0
