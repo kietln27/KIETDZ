@@ -16,7 +16,7 @@ statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
 statusLabel.TextScaled = true
-statusLabel.Text = "Đang khởi động..."
+statusLabel.Text = " Đang khởi động... "
 
 -- Hàm để đổi chữ nhanh
 local function updateStatus(text)
@@ -49,7 +49,7 @@ end
 
 -- 2. Vòng lặp chờ đợi cho đến khi tìm thấy
 local targetPart = nil
-updateStatus("Đang quét tìm bảng điện...")
+updateStatus(" Đang quét tìm nhà máy... ")
 
 repeat
     targetPart = getPowerPlantTarget()
@@ -59,7 +59,6 @@ repeat
 until targetPart
 
 -- 3. Khi đã tìm thấy, tiến hành GHIM NHÌN
-updateStatus("Đã thấy: " .. targetPart.Name .. " - Đang di chuyển!")
 
 RunService.RenderStepped:Connect(function()
     if targetPart and targetPart.Parent and player.Character then
@@ -72,7 +71,7 @@ task.wait(1)
 
 -- Hàm kích hoạt Prompt an toàn
 local function interact(prompt)
-  updateStatus("⚡ Đang sửa máy...")
+  updateStatus(" ⚡Đang sửa máy... ")
     if fireproximityprompt then
         fireproximityprompt(prompt)
     else
@@ -86,7 +85,7 @@ end
 
 -- HÀM RESET XONG MỚI ĐỢI NHẤN PLAY AGAIN
 local function resetAndPlayAgain()
-    updateStatus("Reset & Play Again...")
+    updateStatus(" Reset & Play Again... ")
 
     -- 1. Tự sát (Dùng logic Health bạn vừa chọn)
     if player.Character and player.Character:FindFirstChild("Humanoid") then
