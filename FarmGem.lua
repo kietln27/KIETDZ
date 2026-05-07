@@ -10,7 +10,7 @@ local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "AutoFarmStatus"
 
 local statusLabel = Instance.new("TextLabel", screenGui)
-statusLabel.Size = UDim2.new(0, 300, 0, 50)
+statusLabel.Size = UDim2.new(0, 350, 0, 50)
 statusLabel.Position = UDim2.new(0.5, -150, 0.1, 0) -- Nằm ở giữa phía trên
 statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
@@ -210,7 +210,7 @@ local function startAutoFarm()
             local dist = (root.Position - targetPart.Position).Magnitude
             
             -- CẬP NHẬT UI CÓ ĐẾM NGƯỢC
-            updateStatus(math.floor(dist) .. "m | Còn: " .. math.floor(100 - timeElapsed) .. "s")
+            updateStatus(math.floor(dist) .. "m | Tự reset sau: " .. math.floor(100 - timeElapsed) .. "s")
 
             if dist < 5 then
                 hum.WalkSpeed = 0
