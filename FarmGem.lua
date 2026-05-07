@@ -227,7 +227,7 @@ local function startAutoFarm()
             local dist = (root.Position - targetPart.Position).Magnitude
             
             -- CẬP NHẬT UI CÓ ĐẾM NGƯỢC
-            updateStatus(math.floor(dist) .. "m | Còn lại: " .. math.floor(120 - timeElapsed) .. "s")
+            updateStatus(math.floor(dist) .. "m | Còn lại: " .. math.floor(40 - timeElapsed) .. "s")
 
             if dist < 5 then
                 hum.WalkSpeed = 0
