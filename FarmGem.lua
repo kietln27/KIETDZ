@@ -238,7 +238,7 @@ local function startAutoFarm()
             if dist < 5 then
                 hum.WalkSpeed = 0
             elseif isInsideWall then
-                hum.WalkSpeed = 30
+                hum.WalkSpeed = 10
             else
                 hum.WalkSpeed = 30
             end
