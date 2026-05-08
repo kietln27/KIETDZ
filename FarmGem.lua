@@ -5,24 +5,6 @@ local GuiService = game:GetService("GuiService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
-local TweenService = game:GetService("TweenService")
-
--- Hàm này tính toán để nhân vật lướt đi mượt mà
-local function tweenTo(targetCFrame, speed)
-    local char = player.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    
-    local distance = (root.Position - targetCFrame.Position).Magnitude
-    local duration = distance / speed
-    
-    local info = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, info, {CFrame = targetCFrame})
-    
-    tween:Play()
-    return tween
-end
-
 -- TẠO UI HIỂN THỊ TRẠNG THÁI
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "AutoFarmStatus"
@@ -170,12 +152,6 @@ local function startAutoFarm()
 
         local connection
         connection = RunService.Stepped:Connect(function()
- -- Tắt va chạm toàn bộ cơ thể để xuyên tường
-for _, p in pairs(char:GetDescendants()) do
-    if p:IsA("BasePart") then 
-        p.CanCollide = false 
-    end
-end
         -- KIỂM TRA HẾT 2 PHÚT --
         local timeElapsed = tick() - startTime
             if timeElapsed > 100 then 
@@ -238,40 +214,35 @@ end
                 hum.WalkSpeed = 30
             end
             
-            for _, p in pairs(char:GetDescendants()) do
-                if p:IsA("BasePart") then p.CanCollide = false end
+           if char then
+    for _, v in pairs(char:GetDescendants()) do
+        -- Chỉ ép khi va chạm đang bật (giúp giảm lag/nóng máy)
+        if v:IsA("BasePart") and v.CanCollide == true then
+            v.CanCollide = false
+        end
+    end
+end
+
+            hum:MoveTo(targetPart.Position)
+
+            -- ĐẾN NƠI THÌ DỊCH XUỐNG SÂU
+            if dist < 7 then
+                root.CFrame = targetPart.CFrame * CFrame.new(0, -5, 0)
+                
+                interact(prompt)
+                task.wait(0.5) 
+                
+                if not prompt.Enabled or not prompt.Parent then
+                    connection:Disconnect()
+                    if floor then floor:Destroy() end
+                        task.wait(0.5)
+                    resetAndPlayAgain()
+                end
             end
-
-            -- Thay thế đoạn di chuyển cũ bằng đoạn này:
-local dist = (root.Position - targetPart.Position).Magnitude
-
-if dist > 6 then
-    -- Nếu ở xa mục tiêu thì bắt đầu BAY
-    if not _G.CurrentTween then
-        updateStatus("🚀 Đang lướt đến máy điện...")
-        -- Bay thấp xuống 5 block để ẩn mình dưới sàn/xuyên tường
-        local goalCFrame = targetPart.CFrame * CFrame.new(0, -5, 0)
-        _G.CurrentTween = tweenTo(goalCFrame, 40) -- 40 là tốc độ bay
-    end
-else
-    -- Nếu đã đến nơi thì dừng bay để đứng yên sửa máy
-    if _G.CurrentTween then 
-        _G.CurrentTween:Cancel() 
-        _G.CurrentTween = nil 
-    end
-    
-    -- Lệnh sửa máy của Kiệt
-    interact(prompt)
-    
-    -- Kiểm tra nếu xong máy thì Reset
-    if not prompt.Enabled or not prompt.Parent then
-        connection:Disconnect()
-        updateStatus("✅ Xong! Đợi 1s để Reset...")
-        task.wait(1) 
-        resetAndPlayAgain()
+        end)
     end
 end
-end
+
 player.CharacterAdded:Connect(function()
     task.wait(3)
     startAutoFarm()
