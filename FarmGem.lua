@@ -1,80 +1,95 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local VIM = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+
 local TweenService = game:GetService("TweenService")
 
--- 1. HÀM TWEEN (Lướt xuyên tường)
+-- Hàm này tính toán để nhân vật lướt đi mượt mà
 local function tweenTo(targetCFrame, speed)
     local char = player.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
+    
     local distance = (root.Position - targetCFrame.Position).Magnitude
     local duration = distance / speed
+    
     local info = TweenInfo.new(duration, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(root, info, {CFrame = targetCFrame})
+    
     tween:Play()
     return tween
 end
 
--- 2. TẠO UI (Bảng đen hiển thị)
+-- TẠO UI HIỂN THỊ TRẠNG THÁI
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "AutoFarmStatus"
-screenGui.ResetOnSpawn = false
 
 local statusLabel = Instance.new("TextLabel", screenGui)
 statusLabel.Size = UDim2.new(0, 350, 0, 50)
-statusLabel.Position = UDim2.new(0.5, -175, 0.1, 0)
+statusLabel.Position = UDim2.new(0.5, -150, 0.1, 0) -- Nằm ở giữa phía trên
 statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
 statusLabel.BackgroundTransparency = 0.5
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
 statusLabel.TextScaled = true
 statusLabel.Text = " Đang khởi động... "
 
+-- Hàm để đổi chữ nhanh
 local function updateStatus(text)
     statusLabel.Text = text
 end
 
--- 3. HÀM RESET & PLAY AGAIN (Lì lợm, không Webhook)
-local function resetAndPlayAgain()
-    if _G.CurrentTween then _G.CurrentTween:Cancel() _G.CurrentTween = nil end
-    updateStatus("♻️ Đang Reset...")
+-- 1. Hàm tìm đúng cái bảng điện Nhà Máy
+local function getPowerPlantTarget()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
     
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.Health = 0
-    end
-
-    task.wait(2) 
-
-    local clicked = false
-    local startTime = tick()
-    while not clicked and (tick() - startTime < 15) do
-        local pGui = player:FindFirstChild("PlayerGui")
-        if pGui then
-            for _, v in pairs(pGui:GetDescendants()) do
-                if v:IsA("TextButton") and v.Text:find("Play Again") then
-                    if v.Visible or v.Transparency < 1 then
-                        updateStatus("✅ Đang nhấn Play Again...")
-                        task.wait(0.5)
-                        pcall(function()
-                            if getconnections then
-                                for _, c in pairs(getconnections(v.MouseButton1Click)) do c:Fire() end
-                                for _, c in pairs(getconnections(v.Activated)) do c:Fire() end
-                            end
-                            v:Activate()
-                        end)
-                        clicked = true; break
+    local target, dist = nil, math.huge
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ProximityPrompt") and v.Enabled then
+            local text = (v.ActionText .. v.ObjectText):lower()
+            if text:find("repair") or text:find("power") then
+                local p = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart", true)
+                if p then
+                    local d = (char.HumanoidRootPart.Position - p.Position).Magnitude
+                    if d < dist then 
+                        dist = d
+                        target = p 
                     end
                 end
             end
         end
-        task.wait(1)
     end
+    return target
 end
 
--- 4. HÀM SỬA MÁY
+-- 2. Vòng lặp chờ đợi cho đến khi tìm thấy
+local targetPart = nil
+updateStatus(" Đang quét tìm nhà máy... ")
+
+repeat
+    targetPart = getPowerPlantTarget()
+    if not targetPart then
+        task.wait(1) 
+    end
+until targetPart
+
+-- 3. Khi đã tìm thấy, tiến hành GHIM NHÌN
+
+RunService.RenderStepped:Connect(function()
+    if targetPart and targetPart.Parent and player.Character then
+        local currentPos = camera.CFrame.Position
+        camera.CFrame = CFrame.lookAt(currentPos, targetPart.Position)
+    end
+end)
+task.wait(1)
+
+
+-- Hàm kích hoạt Prompt an toàn
 local function interact(prompt)
-    updateStatus("⚡ Đang sửa máy...")
+  updateStatus(" ⚡Đang sửa máy... ")
     if fireproximityprompt then
         fireproximityprompt(prompt)
     else
@@ -86,85 +101,182 @@ local function interact(prompt)
     end
 end
 
--- 5. LOGIC CHÍNH
-function startAutoFarm()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart", 10)
-    local hum = char:WaitForChild("Humanoid", 10)
-    if not root or not hum then return end
-    
-    local startTime = tick()
-    local targetPart = nil
+-- HÀM RESET XONG MỚI ĐỢI NHẤN PLAY AGAIN
+-- 4. HÀM RESET & PLAY AGAIN (Bản ổn định nhất)
+local function resetAndPlayAgain()
+    updateStatus("♻️ Đang Reset...")
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.Health = 0
+    end
 
-    -- TRẢ LẠI CƠ CHẾ QUÉT KIÊN TRÌ CỦA KIỆT
-    updateStatus("🔍 Đang quét tìm máy phát điện... ")
-    repeat
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") and v.Enabled then
-                local text = (v.ActionText .. v.ObjectText):lower()
-                if text:find("repair") or text:find("power") then
-                    targetPart = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart", true)
-                    if targetPart then break end
+    task.wait(3) 
+
+    local clicked = false
+    while not clicked do
+        local pGui = player:FindFirstChild("PlayerGui")
+        if pGui then
+            for _, v in pairs(pGui:GetDescendants()) do
+                if v:IsA("TextButton") and v.Text:find("Play Again") and v.Visible then
+                    task.wait(0.5)
+                    pcall(function()
+                        if getconnections then
+                            for _, c in pairs(getconnections(v.MouseButton1Click)) do c:Fire() end
+                        end
+                        v:Activate()
+                    end)
+                    clicked = true; break
                 end
             end
         end
-        if not targetPart then task.wait(1) end -- Nếu chưa thấy thì đợi 1 giây quét lại
-    until targetPart
+        task.wait(0.5)
+    end
+end
+local function startAutoFarm()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart", 10)
+    local hum = char:WaitForChild("Humanoid", 10)
+    
+    if not root or not hum then return end
 
-    updateStatus("✅ Đã tìm thấy máy!")
-    local prompt = targetPart:FindFirstChildWhichIsA("ProximityPrompt", true)
-    prompt.HoldDuration = 0
+  local startTime = tick() -- BẮT ĐẦU ĐẾM GIỜ
 
-    -- GHIM NHÌN (Trả lại tính năng nhìn thẳng vào máy)
-    local camCon = RunService.RenderStepped:Connect(function()
-        if targetPart and targetPart.Parent and char.Parent then
-            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, targetPart.Position)
+    local function getTarget()
+        local best, minDist = nil, math.huge
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ProximityPrompt") and v.Enabled then
+                local info = (v.ActionText .. v.ObjectText):lower()
+                if info:find("repair") or info:find("power") then
+                    local p = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart", true)
+                    if p then
+                        local d = (root.Position - p.Position).Magnitude
+                        if d < minDist then minDist = d; best = v end
+                    end
+                end
+            end
         end
-    end)
+        return best
+    end
 
-    local connection
-    connection = RunService.Stepped:Connect(function()
-        local timeElapsed = tick() - startTime
+    local prompt = getTarget()
+    if prompt then
+        prompt.HoldDuration = 0
+        local targetPart = prompt.Parent:IsA("BasePart") and prompt.Parent or prompt.Parent:FindFirstChildWhichIsA("BasePart", true)
         
-        -- Hết giờ hoặc chết thì reset
-        if timeElapsed > 100 or hum.Health <= 0 then
-            if _G.CurrentTween then _G.CurrentTween:Cancel() _G.CurrentTween = nil end
-            if camCon then camCon:Disconnect() end
-            connection:Disconnect()
-            resetAndPlayAgain()
-            return
-        end
+        local floor = Instance.new("Part", workspace)
+        floor.Size = Vector3.new(15, 0.2, 15)
+        floor.Anchored, floor.CanCollide = true, true
+        floor.Transparency = 0.8
+        floor.Color = Color3.new(0, 1, 1)
 
-        local dist = (root.Position - targetPart.Position).Magnitude
-        updateStatus(math.floor(dist) .. "m | Reset sau: " .. math.floor(100 - timeElapsed) .. "s")
-
-        -- LOGIC BAY TWEEN
-        if dist > 6 then
-            if not _G.CurrentTween then
-                -- Bay thấp xuống 5 block để xuyên tường/sàn
-                _G.CurrentTween = tweenTo(targetPart.CFrame * CFrame.new(0, -5, 0), 40)
+        local connection
+        connection = RunService.Stepped:Connect(function()
+ -- Tắt va chạm toàn bộ cơ thể để xuyên tường
+for _, p in pairs(char:GetDescendants()) do
+    if p:IsA("BasePart") then 
+        p.CanCollide = false 
+    end
+end
             end
-        else
-            -- Đã đến nơi
-            if _G.CurrentTween then _G.CurrentTween:Cancel() _G.CurrentTween = nil end
-            interact(prompt)
-            
-            -- Sửa xong máy
-            if not prompt.Enabled or not prompt.Parent then
-                if camCon then camCon:Disconnect() end
+        end
+        -- KIỂM TRA HẾT 2 PHÚT --
+        local timeElapsed = tick() - startTime
+            if timeElapsed > 100 then 
+                connection:Disconnect() 
+                if floor then floor:Destroy() end 
+                resetAndPlayAgain() 
+                return
+            end
+            -- KIỂM TRA CHẾT ĐỂ PLAY AGAIN
+            if hum.Health <= 0 or not char.Parent then
                 connection:Disconnect()
-                updateStatus("✅ Xong! Đợi 1s...")
-                task.wait(1)
+                if floor then floor:Destroy() end
                 resetAndPlayAgain()
+                return
             end
-        end
 
-        -- XUYÊN TƯỜNG CƯỠNG ÉP
-        for _, p in pairs(char:GetDescendants()) do
-            if p:IsA("BasePart") then p.CanCollide = false end
-        end
-    end)
+            if not char or not root or not prompt.Parent or not hum then 
+                if floor then floor:Destroy() end
+                if connection then connection:Disconnect() end
+                return 
+            end
+
+            -- GIỮ SÀN PHẲNG
+            local flatRotation = CFrame.Angles(0, math.rad(root.Orientation.Y), 0)
+            floor.CFrame = CFrame.new(root.Position.X, root.Position.Y - 3.05, root.Position.Z) * flatRotation
+            
+            -- QUÉT TƯỜNG (CODE GỐC CỦA BẠN)
+            local isInsideWall = false
+            local rParams = RaycastParams.new()
+            rParams.FilterDescendantsInstances = {char, floor}
+            rParams.FilterType = Enum.RaycastFilterType.Blacklist
+            local rayOrigin = root.Position + Vector3.new(0, 1.5, 0) 
+            local rayFront = workspace:Raycast(rayOrigin, root.CFrame.LookVector * 1, rParams)
+
+            local oParams = OverlapParams.new()
+            oParams.FilterDescendantsInstances = {char, floor}
+            oParams.FilterType = Enum.RaycastFilterType.Blacklist
+            local checkCFrame = root.CFrame * CFrame.new(0, 1.5, 0)
+            local partsInBody = workspace:GetPartBoundsInBox(checkCFrame, Vector3.new(1.8, 1, 1.8), oParams)
+
+            if (rayFront and rayFront.Instance and rayFront.Instance.CanCollide) then
+                isInsideWall = true
+            else
+                for _, part in pairs(partsInBody) do
+                    if part.CanCollide then isInsideWall = true; break end
+                end
+            end
+
+            -- CHỈNH TỐC ĐỘ: PHANH LẠI KHI CÁCH 5 STUD
+            local dist = (root.Position - targetPart.Position).Magnitude
+            
+            -- CẬP NHẬT UI CÓ ĐẾM NGƯỢC
+            updateStatus(math.floor(dist) .. "m | Tự reset sau: " .. math.floor(100 - timeElapsed) .. "s")
+
+            if dist < 5 then
+                hum.WalkSpeed = 0
+            elseif isInsideWall then
+                hum.WalkSpeed = 7
+            else
+                hum.WalkSpeed = 30
+            end
+            
+            for _, p in pairs(char:GetDescendants()) do
+                if p:IsA("BasePart") then p.CanCollide = false end
+            end
+
+            -- Thay thế đoạn di chuyển cũ bằng đoạn này:
+local dist = (root.Position - targetPart.Position).Magnitude
+
+if dist > 6 then
+    -- Nếu ở xa mục tiêu thì bắt đầu BAY
+    if not _G.CurrentTween then
+        updateStatus("🚀 Đang lướt đến máy điện...")
+        -- Bay thấp xuống 5 block để ẩn mình dưới sàn/xuyên tường
+        local goalCFrame = targetPart.CFrame * CFrame.new(0, -5, 0)
+        _G.CurrentTween = tweenTo(goalCFrame, 40) -- 40 là tốc độ bay
+    end
+else
+    -- Nếu đã đến nơi thì dừng bay để đứng yên sửa máy
+    if _G.CurrentTween then 
+        _G.CurrentTween:Cancel() 
+        _G.CurrentTween = nil 
+    end
+    
+    -- Lệnh sửa máy của Kiệt
+    interact(prompt)
+    
+    -- Kiểm tra nếu xong máy thì Reset
+    if not prompt.Enabled or not prompt.Parent then
+        connection:Disconnect()
+        updateStatus("✅ Xong! Đợi 1s để Reset...")
+        task.wait(1) 
+        resetAndPlayAgain()
+    end
 end
 
--- KHỞI CHẠY
+player.CharacterAdded:Connect(function()
+    task.wait(3)
+    startAutoFarm()
+end)
+
 startAutoFarm()
