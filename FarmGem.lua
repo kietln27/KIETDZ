@@ -271,7 +271,7 @@ else
         resetAndPlayAgain()
     end
 end
-            end
+end
 player.CharacterAdded:Connect(function()
     task.wait(3)
     startAutoFarm()
