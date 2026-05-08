@@ -247,7 +247,11 @@ end
 
             -- ĐẾN NƠI THÌ DỊCH XUỐNG SÂU
             if dist < 7 then
-                root.CFrame = targetPart.CFrame * CFrame.new(0, -5, 0)
+                if floor then 
+        floor:Destroy() 
+        floor = nil -- Gán bằng nil để không bị lỗi ở các dòng sau
+    end
+                root.CFrame = targetPart.CFrame * CFrame.new(0, -3.5, 0)
                 
                 interact(prompt)
                 task.wait(0.5) 
