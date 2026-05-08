@@ -176,8 +176,6 @@ for _, p in pairs(char:GetDescendants()) do
         p.CanCollide = false 
     end
 end
-            end
-        end
         -- KIỂM TRA HẾT 2 PHÚT --
         local timeElapsed = tick() - startTime
             if timeElapsed > 100 then 
@@ -273,7 +271,7 @@ else
         resetAndPlayAgain()
     end
 end
-
+            end
 player.CharacterAdded:Connect(function()
     task.wait(3)
     startAutoFarm()
