@@ -6,6 +6,16 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local startTime = tick() -- BẮT ĐẦU ĐẾM GIỜ
 
+local function sendTelegram(msg)
+    local token = "8752459239:AAHD-nV4g1op_0sRZ7w0RgIYWuN0XFIRPM4"
+    local chatID = "5378786228"
+    local url = "https://api.telegram.org/bot" .. token .. "/sendMessage?chat_id=" .. chatID .. "&text=" .. msg
+    
+    pcall(function()
+        game:GetService("HttpService"):GetAsync(url)
+    end)
+end
+
 -- TẠO UI HIỂN THỊ TRẠNG THÁI
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "AutoFarmStatus"
@@ -263,6 +273,7 @@ end
                 if not prompt.Enabled or not prompt.Parent then
                     connection:Disconnect()
                     if floor then floor:Destroy() end
+                        sendTelegram("+1 Gem")
                         task.wait(0.5)
                     resetAndPlayAgain()
                 end
