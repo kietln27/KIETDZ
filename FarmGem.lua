@@ -4,6 +4,7 @@ local VIM = game:GetService("VirtualInputManager")
 local GuiService = game:GetService("GuiService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+local startTime = tick() -- BẮT ĐẦU ĐẾM GIỜ
 
 -- TẠO UI HIỂN THỊ TRẠNG THÁI
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -149,8 +150,6 @@ local function startAutoFarm()
     
     if not root or not hum then return end
 
-  local startTime = tick() -- BẮT ĐẦU ĐẾM GIỜ
-
     local function getTarget()
         local best, minDist = nil, math.huge
         for _, v in pairs(workspace:GetDescendants()) do
@@ -252,13 +251,7 @@ local function startAutoFarm()
     end
 end
 
-            --hum:MoveTo(targetPart.Position)
-                if dist > 5 then
-    root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position, targetPart.Position) * CFrame.new(0,0,-1), 0.1)
-else
-    -- Khi đã ở rất gần máy thì đứng yên để sửa
-    hum:MoveTo(targetPart.Position) 
-end
+            hum:MoveTo(targetPart.Position)
 
             -- ĐẾN NƠI THÌ DỊCH XUỐNG SÂU
             if dist < 7 then
