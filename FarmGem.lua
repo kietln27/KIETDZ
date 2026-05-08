@@ -86,31 +86,57 @@ end
 -- HÀM RESET XONG MỚI ĐỢI NHẤN PLAY AGAIN
 -- 4. HÀM RESET & PLAY AGAIN (Bản ổn định nhất)
 local function resetAndPlayAgain()
-    updateStatus("♻️ Đang Reset...")
+    updateStatus("♻️ Đang Reset & Chuẩn bị nhấn Play Again...")
+
+    -- 1. Tự sát
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.Health = 0
     end
 
-    task.wait(3) 
+    -- Đợi 3.5 giây để bảng kết quả hiện lên hoàn toàn
+    task.wait(2) 
 
     local clicked = false
-    while not clicked do
+    local startTime = tick()
+
+    -- Vòng lặp kiên trì trong 15 giây
+    while not clicked and (tick() - startTime < 15) do
         local pGui = player:FindFirstChild("PlayerGui")
         if pGui then
+            local foundButton = false
             for _, v in pairs(pGui:GetDescendants()) do
-                if v:IsA("TextButton") and v.Text:find("Play Again") and v.Visible then
-                    task.wait(0.5)
-                    pcall(function()
-                        if getconnections then
-                            for _, c in pairs(getconnections(v.MouseButton1Click)) do c:Fire() end
-                        end
-                        v:Activate()
-                    end)
-                    clicked = true; break
+                if v:IsA("TextButton") and v.Text:find("Play Again") then
+                    foundButton = true
+                    -- Kiểm tra nút có hiện hình không
+                    if v.Visible or v.Transparency < 1 then
+                        updateStatus("✅ Đã tìm thấy nút! Đang nhấn...")
+                        task.wait(0.5) -- Đợi một chút cho nút ổn định
+                        
+                        pcall(function()
+                            -- Thử mọi cách để kích hoạt nút
+                            if getconnections then
+                                for _, c in pairs(getconnections(v.MouseButton1Click)) do c:Fire() end
+                                for _, c in pairs(getconnections(v.Activated)) do c:Fire() end
+                            end
+                            v:Activate()
+                        end)
+                        
+                        clicked = true
+                        break
+                    end
                 end
             end
+            
+            -- CƠ CHẾ TỰ SỬA LỖI: Nếu sau 5s không thấy nút, thử ẩn/hiện PlayerGui
+            if not foundButton and (tick() - startTime > 5) then
+                updateStatus("⚠️ Không thấy nút, đang ép UI tải lại...")
+                pGui.Enabled = false
+                task.wait(0.1)
+                pGui.Enabled = true
+                task.wait(1) -- Đợi UI load lại
+            end
         end
-        task.wait(0.5)
+        task.wait(1) -- Quét lại sau mỗi 1 giây
     end
 end
 local function startAutoFarm()
