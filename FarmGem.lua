@@ -252,7 +252,13 @@ local function startAutoFarm()
     end
 end
 
-            hum:MoveTo(targetPart.Position)
+            --hum:MoveTo(targetPart.Position)
+                if dist > 5 then
+    root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position, targetPart.Position) * CFrame.new(0,0,-1), 0.1)
+else
+    -- Khi đã ở rất gần máy thì đứng yên để sửa
+    hum:MoveTo(targetPart.Position) 
+end
 
             -- ĐẾN NƠI THÌ DỊCH XUỐNG SÂU
             if dist < 7 then
