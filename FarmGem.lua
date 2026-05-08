@@ -92,29 +92,35 @@ function startAutoFarm()
     local root = char:WaitForChild("HumanoidRootPart", 10)
     local hum = char:WaitForChild("Humanoid", 10)
     if not root or not hum then return end
+    
     local startTime = tick()
-
-    -- Tìm máy điện
     local targetPart = nil
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("ProximityPrompt") and v.Enabled then
-            local text = (v.ActionText .. v.ObjectText):lower()
-            if text:find("repair") or text:find("power") then
-                targetPart = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart", true)
-                if targetPart then break end
+
+    -- TRẢ LẠI CƠ CHẾ QUÉT KIÊN TRÌ CỦA KIỆT
+    updateStatus("🔍 Đang quét tìm máy phát điện... ")
+    repeat
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ProximityPrompt") and v.Enabled then
+                local text = (v.ActionText .. v.ObjectText):lower()
+                if text:find("repair") or text:find("power") then
+                    targetPart = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart", true)
+                    if targetPart then break end
+                end
             end
         end
-    end
-  task.wait(10)
-    if not targetPart then 
-        updateStatus("❌ Không thấy máy, đợi ván mới...")
-        task.wait(2)
-        resetAndPlayAgain()
-        return 
-    end
+        if not targetPart then task.wait(1) end -- Nếu chưa thấy thì đợi 1 giây quét lại
+    until targetPart
 
+    updateStatus("✅ Đã tìm thấy máy!")
     local prompt = targetPart:FindFirstChildWhichIsA("ProximityPrompt", true)
     prompt.HoldDuration = 0
+
+    -- GHIM NHÌN (Trả lại tính năng nhìn thẳng vào máy)
+    local camCon = RunService.RenderStepped:Connect(function()
+        if targetPart and targetPart.Parent and char.Parent then
+            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, targetPart.Position)
+        end
+    end)
 
     local connection
     connection = RunService.Stepped:Connect(function()
@@ -123,6 +129,7 @@ function startAutoFarm()
         -- Hết giờ hoặc chết thì reset
         if timeElapsed > 100 or hum.Health <= 0 then
             if _G.CurrentTween then _G.CurrentTween:Cancel() _G.CurrentTween = nil end
+            if camCon then camCon:Disconnect() end
             connection:Disconnect()
             resetAndPlayAgain()
             return
@@ -131,25 +138,28 @@ function startAutoFarm()
         local dist = (root.Position - targetPart.Position).Magnitude
         updateStatus(math.floor(dist) .. "m | Reset sau: " .. math.floor(100 - timeElapsed) .. "s")
 
-        -- Di chuyển
+        -- LOGIC BAY TWEEN
         if dist > 6 then
             if not _G.CurrentTween then
+                -- Bay thấp xuống 5 block để xuyên tường/sàn
                 _G.CurrentTween = tweenTo(targetPart.CFrame * CFrame.new(0, -5, 0), 40)
             end
         else
+            -- Đã đến nơi
             if _G.CurrentTween then _G.CurrentTween:Cancel() _G.CurrentTween = nil end
             interact(prompt)
             
-            -- Sửa xong thì đợi 1s rồi reset
+            -- Sửa xong máy
             if not prompt.Enabled or not prompt.Parent then
+                if camCon then camCon:Disconnect() end
                 connection:Disconnect()
-                updateStatus("✅ Xong! Chờ 1s...")
+                updateStatus("✅ Xong! Đợi 1s...")
                 task.wait(1)
                 resetAndPlayAgain()
             end
         end
 
-        -- Xuyên tường
+        -- XUYÊN TƯỜNG CƯỠNG ÉP
         for _, p in pairs(char:GetDescendants()) do
             if p:IsA("BasePart") then p.CanCollide = false end
         end
