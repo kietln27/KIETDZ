@@ -105,7 +105,7 @@ function startAutoFarm()
             end
         end
     end
-
+  task.wait(10)
     if not targetPart then 
         updateStatus("❌ Không thấy máy, đợi ván mới...")
         task.wait(2)
