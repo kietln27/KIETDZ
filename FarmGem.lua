@@ -95,12 +95,11 @@ local function resetAndPlayAgain()
     end
 
     local clicked = false
-    local attempts = 0
 
-    -- Vòng lặp quét liên tục trong 20 giây cho đến khi bấm được mới thôi
+    -- Vòng lặp quét liên tục MÃI MÃI cho đến khi bấm được mới thôi
     task.spawn(function()
-        while not clicked and attempts < 40 do
-            attempts = attempts + 1
+        -- Thay đổi ở đây: while true sẽ chạy không dừng
+        while not clicked do 
             local pGui = player:FindFirstChild("PlayerGui")
             
             if pGui then
@@ -122,19 +121,19 @@ local function resetAndPlayAgain()
                         end)
                         
                         updateStatus("✅ Đã bấm Play Again!")
-                        clicked = true
-                        break
+                        
+                        -- Nếu game chưa chuyển server ngay, đợi 2 giây rồi cho phép quét tiếp 
+                        -- để tránh việc script bị dừng nếu bấm hụt
+                        task.wait(2) 
+                        -- clicked = true -- Kiệt có thể bỏ comment dòng này nếu muốn nó dừng quét sau khi bấm 1 lần thành công
                     end
                 end
             end
-            task.wait(0.5) -- Quét mỗi 0.5 giây để không bỏ lỡ khoảnh khắc nút hiện ra
-        end
-        
-        if not clicked then
-            updateStatus("⚠️ Lỗi: Không tìm thấy nút sau 20s!")
+            task.wait(0.5) -- Quét mỗi 0.5 giây
         end
     end)
 end
+
 local function startAutoFarm()
     local char = player.Character or player.CharacterAdded:Wait()
     local root = char:WaitForChild("HumanoidRootPart", 10)
